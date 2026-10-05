@@ -318,11 +318,11 @@ function scorigamiStart() {
 
   function selectCell(key, games) {
     state.selected = key;
-    openDetail(key, games);
+    openDetail(key, games, true); // só rola a tela quando o clique foi numa célula
     buildAndRender(); // to refresh 'selected' highlight without recomputation cost issue
   }
 
-  function openDetail(key, games) {
+  function openDetail(key, games, scroll) {
     var parts = key.split("_");
     var w = parts[0], l = parts[1];
     el.detailTitle.textContent = w + "\u2013" + l + "  \u00b7  " + gamesLabel(games.length);
@@ -353,7 +353,7 @@ function scorigamiStart() {
       });
     }
     el.detail.classList.add("open");
-    el.detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (scroll) el.detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function closeDetail() {
