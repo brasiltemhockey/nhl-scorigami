@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>NHL Scorigami — Painel</title>
+<style>
+  :root{ --bg:#0a1520; --card:#0f2033; --line:#1f3548; --ink:#dbe8f0; --dim:#7f97ab; --blue:#4fa8f0; --red:#d6293f; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,Arial,sans-serif; padding:24px; }
+  .wrap{ max-width:980px; margin:0 auto; }
+  h1{ font-size:24px; margin:0 0 6px; } h2{ font-size:16px; margin:0 0 12px; }
+  p.sub{ color:var(--dim); margin:0 0 20px; font-size:14px; line-height:1.5; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:18px; margin-bottom:18px; }
+  .row{ display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+  label{ display:flex; flex-direction:column; gap:5px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  input,select,textarea{ background:#0a1520; border:1px solid var(--line); color:var(--ink); border-radius:4px; padding:8px 10px; font-size:14px; font-family:inherit; }
+  input.team{ width:210px; } input.goals{ width:64px; } input.wide{ width:260px; }
+  textarea{ width:100%; height:90px; font-family:monospace; font-size:12px; }
+  button{ background:var(--blue); color:#06121c; border:none; border-radius:4px; padding:9px 16px; font-weight:600; cursor:pointer; font-size:14px; }
+  button:disabled{ opacity:.5; cursor:default; }
+  button.sec{ background:transparent; color:var(--ink); border:1px solid var(--line); }
+  button.del{ background:transparent; color:var(--dim); border:none; padding:2px 8px; }
+  button.del:hover{ color:var(--red); }
+  .msg{ margin-top:10px; font-size:13px; min-height:18px; line-height:1.5; } .err{ color:#ff7d8b; } .ok{ color:#6fd58f; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; color:var(--dim); font-weight:500; padding:6px; border-bottom:1px solid var(--line); }
+  td{ padding:6px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .tag{ font-size:11px; color:var(--blue); text-transform:uppercase; }
+  .tools{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+  .hint{ font-size:12.5px; color:var(--dim); line-height:1.5; }
+  code{ background:#0a1520; padding:1px 5px; border-radius:3px; }
+  details summary{ cursor:pointer; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Painel de jogos</h1>
+  <p class="sub">Adicione os resultados e clique em <b>Publicar no site</b>. A edição só funciona com o seu token do GitHub, guardado apenas neste navegador; quem abrir esta página sem o token só consegue olhar.</p>
+
+  <div class="card">
+    <details id="cfgBox">
+      <summary>Conexão com o GitHub</summary>
+      <p class="hint">Crie em GitHub → Settings → Developer settings → Personal access tokens → <i>Fine-grained tokens</i>, com acesso apenas ao repositório do site e a permissão <b>Contents: Read and write</b>.</p>
+      <div class="row">
+        <label>Repositório (dono/nome) <input class="wide" id="cRepo" placeholder="seuusuario/nhl-scorigami"></label>
+        <label>Branch <input id="cBranch" value="main" style="width:110px"></label>
+        <label>Arquivo <input id="cPath" value="jogos_novos.js" style="width:170px"></label>
+        <label>Token <input class="wide" id="cToken" type="password" placeholder="github_pat_..." autocomplete="off"></label>
+        <button id="btnSaveCfg">Salvar e carregar</button>
+      </div>
+    </details>
+    <div class="msg" id="cmsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Um jogo por vez</h2>
+    <div class="row">
+      <label>Data <input type="date" id="fDate"></label>
+      <label>Fase
+        <select id="fType"><option value="reg">Temporada regular</option><option value="po">Playoffs</option></select>
+      </label>
+      <label>Visitante <input class="team" id="fAway" list="teams" autocomplete="off"></label>
+      <label>Gols <input class="goals" id="fAg" type="number" min="0" max="30"></label>
+      <label>Mandante <input class="team" id="fHome" list="teams" autocomplete="off"></label>
+      <label>Gols <input class="goals" id="fHg" type="number" min="0" max="30"></label>
+      <button id="btnAdd">Adicionar</button>
+    </div>
+    <datalist id="teams"></datalist>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Colar várias linhas do Excel</h2>
+    <p class="hint">Mesmo formato da Temporada_25_26.xlsx (Data, Horário, Time Visitante, Gols, Time Mandante, Gols, Prorrogação, Público). Cabeçalho é ignorado.</p>
+    <textarea id="paste"></textarea>
+    <div class="tools">
+      <select id="pType"><option value="reg">Temporada regular</option><option value="po">Playoffs</option></select>
+      <button class="sec" id="btnPaste">Importar linhas coladas</button>
+    </div>
+    <div class="msg" id="pmsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Jogos cadastrados (<span id="count">0</span>)</h2>
+    <table>
+      <thead><tr><th>Data</th><th>Temporada</th><th>Jogo</th><th>Fase</th><th></th></tr></thead>
+      <tbody id="list"></tbody>
+    </table>
+    <div class="tools">
+      <button id="btnPub">Publicar no site</button>
+      <button class="sec" id="btnDown">Baixar arquivo (backup)</button>
+      <span class="hint" id="dirty"></span>
+    </div>
+    <div class="msg" id="smsg"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  "use strict";
+  var D = window.SCORIGAMI_DATA;
+  var games = [], sha = null, dirty = false;
+  var $ = function (id) { return document.getElementById(id); };
+  var LS = "scorigami_admin_cfg";
+
+  // ---------- util ----------
+  var known = D ? D.teams.slice() : [];
+  known.slice().reverse().forEach(function (t) { var o = document.createElement("option"); o.value = t; $("teams").appendChild(o); });
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function say(id, cls, txt) { var m = $(id); m.className = "msg " + cls; m.textContent = txt; }
+  function seasonLabel(iso) {
+    var p = iso.split("-"), y = +p[0], m = +p[1], s = m >= 8 ? y : y - 1;
+    return String(s).slice(2) + "/" + String(s + 1).slice(2);
+  }
+  function validDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)); }
+  function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
+  function b64dec(s) { return decodeURIComponent(escape(atob(s.replace(/\s/g, "")))); }
+
+  function buildFile() {
+    var sorted = games.slice().sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0; });
+    return "// Jogos adicionados pelo painel (admin.html), a partir da temporada 26/27.\n" +
+      "// Cada linha: [data (AAAA-MM-DD), time visitante, gols visitante, time mandante, gols mandante, fase]\n" +
+      "// fase: \"reg\" = temporada regular, \"po\" = playoffs\n" +
+      "window.SCORIGAMI_EXTRA = [\n" +
+      sorted.map(function (g) { return "  " + JSON.stringify(g); }).join(",\n") + (sorted.length ? "\n" : "") + "];\n";
+  }
+  function parseFile(txt) {
+    var fake = {};
+    new Function("window", txt)(fake);
+    return (fake.SCORIGAMI_EXTRA || []).map(function (r) { return r.slice(); });
+  }
+
+  // ---------- GitHub ----------
+  function cfg() { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch (e) { return {}; } }
+  function api(c, method, body) {
+    var url = "https://api.github.com/repos/" + c.repo + "/contents/" + c.path.split("/").map(encodeURIComponent).join("/");
+    if (method === "GET") url += "?ref=" + encodeURIComponent(c.branch) + "&t=" + Date.now();
+    return fetch(url, {
+      method: method,
+      headers: { "Authorization": "Bearer " + c.token, "Accept": "application/vnd.github+json" },
+      body: body ? JSON.stringify(body) : undefined
+    });
+  }
+  function loadRemote() {
+    var c = cfg();
+    if (!c.repo || !c.token) { $("cfgBox").open = true; say("cmsg", "err", "Preencha a conexão com o GitHub para poder publicar."); return; }
+    say("cmsg", "hint", "Carregando do GitHub…");
+    api(c, "GET").then(function (r) {
+      if (r.status === 404) { games = []; sha = null; say("cmsg", "ok", "Arquivo ainda não existe no repositório; será criado ao publicar."); render(); return; }
+      if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? "Token sem permissão ou inválido (erro " + r.status + ")." : "Erro " + r.status + " ao ler o GitHub.");
+      return r.json().then(function (j) {
+        sha = j.sha; games = parseFile(b64dec(j.content)); dirty = false;
+        say("cmsg", "ok", "Conectado a " + c.repo + ". " + games.length + " jogo(s) carregado(s).");
+        render();
+      });
+    }).catch(function (e) { say("cmsg", "err", e.message || String(e)); });
+  }
+  $("btnSaveCfg").addEventListener("click", function () {
+    var c = { repo: $("cRepo").value.trim(), branch: $("cBranch").value.trim() || "main", path: $("cPath").value.trim() || "jogos_novos.js", token: $("cToken").value.trim() };
+    if (!/^[\w.-]+\/[\w.-]+$/.test(c.repo)) { say("cmsg", "err", "Use o formato dono/nome, por exemplo seuusuario/nhl-scorigami."); return; }
+    localStorage.setItem(LS, JSON.stringify(c));
+    loadRemote();
+  });
+  $("btnPub").addEventListener("click", function () {
+    var c = cfg();
+    if (!c.repo || !c.token) { say("smsg", "err", "Configure a conexão com o GitHub primeiro."); return; }
+    $("btnPub").disabled = true; say("smsg", "hint", "Publicando…");
+    var body = { message: "Atualiza jogos (" + games.length + " no total)", content: b64enc(buildFile()), branch: c.branch };
+    if (sha) body.sha = sha;
+    api(c, "PUT", body).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(r.status === 409 || r.status === 422 ? "O arquivo mudou no GitHub desde que foi carregado. Recarregue a página e refaça a alteração." : (j.message || "Erro " + r.status));
+        sha = j.content.sha; dirty = false; render();
+        say("smsg", "ok", "Publicado! O site atualiza em cerca de 1 a 2 minutos (atualize com Ctrl+F5).");
+      });
+    }).catch(function (e) { say("smsg", "err", e.message || String(e)); })
+      .then(function () { $("btnPub").disabled = false; });
+  });
+
+  // ---------- lista / formulário ----------
+  function render() {
+    var sorted = games.map(function (g, i) { return { g: g, i: i }; })
+      .sort(function (a, b) { return a.g[0] < b.g[0] ? 1 : a.g[0] > b.g[0] ? -1 : b.i - a.i; });
+    $("list").innerHTML = sorted.map(function (o) {
+      var g = o.g;
+      return "<tr><td>" + esc(g[0]) + "</td><td>" + seasonLabel(g[0]) + "</td><td>" + esc(g[1]) + " " + g[2] + " @ " + esc(g[3]) + " " + g[4] +
+        "</td><td class='tag'>" + (g[5] === "po" ? "Playoff" : "Reg.") + "</td><td><button class='del' data-i='" + o.i + "' title='Remover'>✕</button></td></tr>";
+    }).join("") || "<tr><td colspan='5' class='hint'>Nenhum jogo cadastrado ainda.</td></tr>";
+    $("count").textContent = games.length;
+    $("dirty").textContent = dirty ? "Há alterações ainda não publicadas." : "";
+  }
+  function check(date, away, ag, home, hg) {
+    if (!validDate(date)) return "Data inválida.";
+    if (!away || !home) return "Informe os dois times.";
+    if (away === home) return "Os times precisam ser diferentes.";
+    if (!(Number.isInteger(ag) && ag >= 0 && Number.isInteger(hg) && hg >= 0)) return "Informe os gols (números inteiros).";
+    if (ag === hg) return "Não há empates na NHL atual: informe o placar final, incluindo prorrogação/shootout.";
+    return null;
+  }
+  function isDup(g) { return games.some(function (x) { return x[0] === g[0] && x[1] === g[1] && x[3] === g[3] && x[5] === g[5]; }); }
+
+  $("btnAdd").addEventListener("click", function () {
+    var date = $("fDate").value, away = $("fAway").value.trim(), home = $("fHome").value.trim();
+    var ag = parseInt($("fAg").value, 10), hg = parseInt($("fHg").value, 10), type = $("fType").value;
+    var e = check(date, away, ag, home, hg);
+    if (e) return say("msg", "err", e);
+    var g = [date, away, ag, home, hg, type];
+    if (isDup(g)) return say("msg", "err", "Esse jogo já está na lista.");
+    var warn = [away, home].filter(function (t) { return known.indexOf(t) < 0; });
+    games.push(g); dirty = true;
+    say("msg", "ok", "Adicionado: " + away + " " + ag + " @ " + home + " " + hg + (warn.length ? " (atenção: time que não existe em data.js: " + warn.join(", ") + ")" : ""));
+    ["fAway", "fHome", "fAg", "fHg"].forEach(function (id) { $(id).value = ""; });
+    $("fAway").focus(); render();
+  });
+  ["fAway", "fAg", "fHome", "fHg"].forEach(function (id) {
+    $(id).addEventListener("keydown", function (ev) { if (ev.key === "Enter") $("btnAdd").click(); });
+  });
+
+  function parseDate(s) {
+    s = String(s).trim().slice(0, 10);
+    var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    return m ? m[3] + "-" + ("0" + m[2]).slice(-2) + "-" + ("0" + m[1]).slice(-2) : s;
+  }
+  $("btnPaste").addEventListener("click", function () {
+    var type = $("pType").value, added = 0, errs = [];
+    $("paste").value.split(/\r?\n/).forEach(function (line, n) {
+      if (!line.trim()) return;
+      var c = line.split("\t"), date = parseDate(c[0]);
+      if (n === 0 && !validDate(date)) return;
+      var away = (c[2] || "").trim(), home = (c[4] || "").trim(), ag = parseInt(c[3], 10), hg = parseInt(c[5], 10);
+      var e = check(date, away, ag, home, hg);
+      if (e) { errs.push("Linha " + (n + 1) + ": " + e); return; }
+      var g = [date, away, ag, home, hg, type];
+      if (isDup(g)) { errs.push("Linha " + (n + 1) + ": jogo repetido, ignorado."); return; }
+      games.push(g); added++;
+    });
+    if (added) { dirty = true; render(); $("paste").value = errs.length ? $("paste").value : ""; }
+    $("pmsg").className = "msg " + (errs.length ? "err" : "ok");
+    $("pmsg").innerHTML = added + " jogo(s) importado(s)." + (errs.length ? "<br>" + errs.map(esc).join("<br>") : "");
+  });
+  $("list").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button.del");
+    if (!b) return;
+    games.splice(+b.getAttribute("data-i"), 1); dirty = true; render();
+  });
+  $("btnDown").addEventListener("click", function () {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([buildFile()], { type: "text/javascript" }));
+    a.download = "jogos_novos.js";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  window.addEventListener("beforeunload", function (e) { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+  var c = cfg();
+  $("cRepo").value = c.repo || ""; $("cBranch").value = c.branch || "main"; $("cPath").value = c.path || "jogos_novos.js"; $("cToken").value = c.token || "";
+  render(); loadRemote();
+})();
+</script>
+</body>
+</html>

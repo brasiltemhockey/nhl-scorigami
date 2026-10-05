@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NHL Scorigami — Todos os placares da história da NHL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ice:      #eaf2f6;
+    --rink-navy:#0a1520;
+    --rink-navy-2:#0f2033;
+    --blueline: #1e5fa8;
+    --blueline-glow: #4fa8f0;
+    --goal-red: #d6293f;
+    --goal-red-glow: #ff5c6c;
+    --cell-cold: #16283a;
+    --cell-border: #1f3548;
+    --ink-dim: #7f97ab;
+    --ink: #dbe8f0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(1200px 700px at 50% -10%, var(--rink-navy-2) 0%, var(--rink-navy) 55%, #060c14 100%);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+  }
+  ::selection{ background: var(--goal-red); color:white; }
+
+  /* ---------- layout shell ---------- */
+  .wrap{ max-width:1180px; margin:0 auto; padding: 0 24px 80px; }
+
+  /* ---------- hero ---------- */
+  header.hero{
+    position:relative;
+    padding: 56px 24px 40px;
+    text-align:center;
+    overflow:hidden;
+    border-bottom: 2px solid var(--blueline);
+  }
+  header.hero::before{
+    content:"";
+    position:absolute; left:0; right:0; top: 50%;
+    height:6px; transform:translateY(-50%);
+    background: repeating-linear-gradient(90deg, var(--goal-red) 0 22px, transparent 22px 40px);
+    opacity:.18;
+  }
+  .eyebrow{
+    font-family:'Share Tech Mono', monospace;
+    letter-spacing:.35em;
+    font-size:12px;
+    color: var(--blueline-glow);
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  h1.title{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size: clamp(42px, 8vw, 92px);
+    letter-spacing:.01em;
+    margin:0;
+    line-height:.95;
+    color: var(--ice);
+    text-shadow: 0 0 40px rgba(79,168,240,.25);
+  }
+  h1.title span{ color: var(--goal-red); text-shadow: 0 0 30px rgba(214,41,63,.55); }
+  .subtitle{
+    max-width:620px; margin: 18px auto 0;
+    color: var(--ink-dim);
+    font-size:15.5px; line-height:1.6;
+  }
+
+  .scoreboard{
+    display:flex; justify-content:center; gap:0;
+    margin: 40px auto 0;
+    max-width: 720px;
+    border: 1px solid var(--cell-border);
+    background: rgba(10,21,32,.6);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .sb-stat{
+    flex:1; padding: 18px 12px; text-align:center;
+    border-right: 1px solid var(--cell-border);
+  }
+  .sb-stat:last-child{ border-right:none; }
+  .sb-num{
+    font-family:'Share Tech Mono', monospace;
+    font-size: clamp(22px, 4vw, 34px);
+    color: var(--blueline-glow);
+    text-shadow: 0 0 16px rgba(79,168,240,.5);
+  }
+  .sb-label{
+    font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+    color: var(--ink-dim); margin-top:6px;
+  }
+
+  .lang{ position:absolute; top:16px; right:20px; display:flex; border:1px solid var(--cell-border); border-radius:4px; overflow:hidden; z-index:2; }
+  .lang button{ background:transparent; border:none; color:var(--ink-dim); font-family:'Share Tech Mono', monospace; font-size:12px; letter-spacing:.1em; padding:6px 11px; cursor:pointer; }
+  .lang button + button{ border-left:1px solid var(--cell-border); }
+  .lang button.active{ background:var(--blueline); color:white; }
+  .lang button:hover:not(.active){ color:var(--ice); }
+
+  /* ---------- controls ---------- */
+  .controls{
+    margin-top: 44px;
+    display:flex; flex-wrap:wrap; gap:28px;
+    align-items:flex-end; justify-content:space-between;
+    padding: 18px 22px;
+    background: rgba(15,32,51,.4);
+    border: 1px solid var(--cell-border);
+    border-radius:6px;
+  }
+  .ctrl-group{ display:flex; flex-direction:column; gap:8px; min-width:180px; }
+  .ctrl-label{
+    font-family:'Share Tech Mono', monospace;
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase; color: var(--ink-dim);
+  }
+  .segmented{ display:flex; border:1px solid var(--cell-border); border-radius:4px; overflow:hidden; }
+  .segmented button{
+    flex:1; background:transparent; border:none; color:var(--ink-dim);
+    font-family:'Inter'; font-size:13px; font-weight:600; padding:9px 14px; cursor:pointer;
+    border-right:1px solid var(--cell-border); transition:.15s;
+  }
+  .segmented button:last-child{ border-right:none; }
+  .segmented button.active{ background: var(--blueline); color:white; }
+  .segmented button:hover:not(.active){ background: rgba(30,95,168,.25); color:var(--ice); }
+
+  .range-row{ display:flex; align-items:center; gap:10px; }
+  .range-row input[type=range]{ width:180px; accent-color: var(--blueline-glow); }
+  .range-val{ font-family:'Share Tech Mono', monospace; font-size:13px; color:var(--ice); min-width:38px; }
+
+  /* ---------- most recent scorigami banner ---------- */
+  .recent-banner{
+    margin-top:26px;
+    display:flex; align-items:center; gap:16px;
+    padding: 16px 20px;
+    border:1px solid var(--goal-red);
+    background: linear-gradient(90deg, rgba(214,41,63,.14), rgba(214,41,63,.02));
+    border-radius:6px;
+  }
+  .goal-light{
+    width:14px; height:14px; border-radius:50%;
+    background: var(--goal-red-glow);
+    box-shadow: 0 0 14px 4px rgba(255,92,108,.7);
+    animation: pulse 1.4s infinite ease-in-out;
+    flex-shrink:0;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .recent-text b{ color: var(--ice); }
+  .recent-text{ font-size:14px; color: var(--ink-dim); line-height:1.5; }
+  .recent-label{
+    font-family:'Share Tech Mono', monospace; font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color: var(--goal-red-glow); margin-bottom:3px;
+  }
+
+  /* ---------- grid section ---------- */
+  .grid-section{ margin-top: 40px; }
+  .grid-heading{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+  .grid-heading h2{ font-family:'Oswald'; font-size:22px; margin:0; color:var(--ice); font-weight:600; }
+  .grid-heading small{ color:var(--ink-dim); font-size:12.5px; }
+
+  .grid-scroll{ overflow-x:auto; padding-bottom:8px; }
+  .grid-outer{ display:inline-flex; gap:14px; }
+
+  .axis-y-label, .axis-x-label{
+    font-family:'Share Tech Mono', monospace; font-size:10.5px; letter-spacing:.1em;
+    color:var(--ink-dim); text-transform:uppercase;
+  }
+  .axis-y-label{ writing-mode: vertical-rl; transform:rotate(180deg); text-align:center; padding: 8px 0; }
+
+  .grid-block{ display:flex; flex-direction:column; }
+  .grid-rows{ display:flex; flex-direction:column-reverse; gap:3px; }
+  .grid-row{ display:flex; gap:3px; align-items:center; }
+  .row-tick{
+    width:22px; text-align:right; padding-right:6px;
+    font-family:'Share Tech Mono', monospace; font-size:11px; color:var(--ink-dim);
+  }
+  .cell{
+    width:28px; height:28px; border-radius:3px;
+    background: var(--cell-cold);
+    border: 1px solid var(--cell-border);
+    cursor: default;
+    position:relative;
+    transition: transform .1s ease;
+  }
+  .cell.hit{ cursor:pointer; }
+  .cell.hit:hover{ transform: scale(1.18); z-index:5; box-shadow:0 0 0 1px var(--blueline-glow); }
+  .cell.tie::after{
+    content:""; position:absolute; inset:0; margin:auto; width:5px; height:5px;
+    border-radius:50%; background: rgba(255,255,255,.5);
+  }
+  .cell.selected{ outline: 2px solid var(--goal-red-glow); outline-offset:1px; }
+  .cell.recent{ animation: pulse 1.2s infinite ease-in-out; box-shadow:0 0 12px 3px rgba(255,92,108,.6); }
+
+  .col-ticks{ display:flex; gap:3px; padding-left:25px; margin-top:6px; }
+  .col-tick{ width:28px; text-align:center; font-family:'Share Tech Mono', monospace; font-size:11px; color:var(--ink-dim); }
+
+  .legend{ display:flex; align-items:center; gap:8px; margin-top:14px; font-size:11px; color:var(--ink-dim); font-family:'Share Tech Mono', monospace;}
+  .legend-swatch{ width:16px; height:16px; border-radius:3px; border:1px solid var(--cell-border); }
+
+  /* ---------- detail panel ---------- */
+  .detail{
+    margin-top:34px; border:1px solid var(--cell-border); border-radius:6px;
+    background: rgba(10,21,32,.55); padding:20px 22px; display:none;
+  }
+  .detail.open{ display:block; }
+  .detail-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .detail-head h3{ font-family:'Oswald'; font-size:20px; margin:0; color:var(--ice); font-weight:600;}
+  .detail-head button{
+    background:transparent; border:1px solid var(--cell-border); color:var(--ink-dim);
+    border-radius:4px; padding:6px 10px; cursor:pointer; font-family:'Inter'; font-size:12px;
+  }
+  .detail-head button:hover{ color:var(--ice); border-color:var(--blueline-glow); }
+  .games-list{ max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
+  .game-row{
+    display:flex; justify-content:space-between; gap:12px;
+    padding:9px 4px; border-bottom:1px solid rgba(255,255,255,.05);
+    font-size:13.5px;
+  }
+  .game-row .date{ font-family:'Share Tech Mono', monospace; color:var(--ink-dim); min-width:92px; }
+  .game-row .matchup{ flex:1; color:var(--ink); }
+  .game-row .tag{ font-family:'Share Tech Mono', monospace; font-size:10.5px; color:var(--blueline-glow); text-transform:uppercase; }
+  .empty-hint{ color:var(--ink-dim); font-size:13.5px; padding:30px 0; text-align:center; }
+
+  footer{ text-align:center; padding: 50px 24px 10px; color:var(--ink-dim); font-size:12px; }
+  footer a{ color:var(--blueline-glow); }
+
+  @media (max-width: 640px){
+    .controls{ flex-direction:column; align-items:stretch; }
+    .cell, .row-tick, .col-tick{ }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="lang" id="langSeg"><button data-lang="pt">PT</button><button data-lang="en">EN</button></div>
+  <div class="eyebrow" data-i18n="eyebrow">Cada placar. Toda a história.</div>
+  <h1 class="title">NHL <span>SCORIGAMI</span></h1>
+  <p class="subtitle" data-i18n="subtitle">Mais de cem anos de jogos da NHL, reduzidos a uma única grade: cada combinação de placar já registrada — e todas as que ainda não aconteceram.</p>
+
+  <div class="scoreboard">
+    <div class="sb-stat"><div class="sb-num" id="statGames">–</div><div class="sb-label" data-i18n="sbGames">Jogos analisados</div></div>
+    <div class="sb-stat"><div class="sb-num" id="statScores">–</div><div class="sb-label" data-i18n="sbScores">Placares distintos</div></div>
+    <div class="sb-stat"><div class="sb-num" id="statPct">–</div><div class="sb-label" data-i18n="sbPct">Da grade preenchida</div></div>
+    <div class="sb-stat"><div class="sb-num" id="statSpan">–</div><div class="sb-label" data-i18n="sbSeasons">Temporadas</div></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <div class="ctrl-label" data-i18n="ctrlType">Tipo de jogo</div>
+      <div class="segmented" id="typeSeg">
+        <button data-val="all" class="active" data-i18n="typeAll">Todos</button>
+        <button data-val="reg" data-i18n="typeReg">Temporada regular</button>
+        <button data-val="po" data-i18n="typePo">Playoffs</button>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label" data-i18n="ctrlFrom">A partir da temporada</div>
+      <div class="range-row">
+        <input type="range" id="yearFrom" min="1917" max="2026" value="1917">
+        <span class="range-val" id="yearFromVal">1917</span>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label" data-i18n="ctrlTo">Até a temporada</div>
+      <div class="range-row">
+        <input type="range" id="yearTo" min="1917" max="2026" value="2026">
+        <span class="range-val" id="yearToVal">2026</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="recent-banner" id="recentBanner">
+    <div class="goal-light"></div>
+    <div class="recent-text">
+      <div class="recent-label" data-i18n="recentLabel">Scorigami mais recente</div>
+      <div id="recentText">Calculando…</div>
+    </div>
+  </div>
+
+  <div class="grid-section">
+    <div class="grid-heading">
+      <h2 data-i18n="gridTitle">A grade de placares</h2>
+      <small data-i18n="gridHelp">Eixo vertical = placar do vencedor · Eixo horizontal = placar do perdedor · <span style="opacity:.7">●</span> = empate. Clique numa célula para ver os jogos.</small>
+    </div>
+
+    <div class="grid-scroll">
+      <div class="grid-outer">
+        <div class="axis-y-label" data-i18n="axisWinner">Placar do vencedor</div>
+        <div class="grid-block">
+          <div class="grid-rows" id="gridRows"></div>
+          <div class="col-ticks" id="colTicks"></div>
+          <div class="axis-x-label" data-i18n="axisLoser" style="text-align:center; margin-top:6px;">Placar do perdedor</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span data-i18n="legendNever">Nunca aconteceu</span>
+      <span class="legend-swatch" style="background:#16283a"></span>
+      <span class="legend-swatch" style="background:#1c3f5e"></span>
+      <span class="legend-swatch" style="background:#2a6ea8"></span>
+      <span class="legend-swatch" style="background:#4fa8f0"></span>
+      <span class="legend-swatch" style="background:#eaf2f6"></span>
+      <span data-i18n="legendCommon">Placar mais comum</span>
+    </div>
+  </div>
+
+  <div class="detail" id="detail">
+    <div class="detail-head">
+      <h3 id="detailTitle">—</h3>
+      <button id="detailClose" data-i18n="close">Fechar ✕</button>
+    </div>
+    <div class="games-list" id="gamesList"></div>
+  </div>
+
+  <footer data-i18n="footer">
+    Feito a partir de dados históricos de jogos da NHL (1917–<span id="footerYears">2026</span>). Inspirado no conceito de <em>Scorigami</em> do futebol americano.
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="jogos_novos.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
