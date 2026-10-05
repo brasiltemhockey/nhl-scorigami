@@ -81,6 +81,9 @@ function scorigamiStart() {
     if (g.seasonYear > MAX_SEASON) MAX_SEASON = g.seasonYear;
   });
 
+  var LAST_YEAR = 0;
+  ALL_GAMES.forEach(function (g) { var y = new Date(g.ms).getUTCFullYear(); if (y > LAST_YEAR) LAST_YEAR = y; });
+
   var TOTAL_POSSIBLE = (MAX_SCORE + 1) * (MAX_SCORE + 2) / 2;
 
   // ---------- DOM refs ----------
@@ -92,7 +95,7 @@ function scorigamiStart() {
     yearToVal: document.getElementById("yearToVal"),
     statGames: document.getElementById("statGames"),
     statScores: document.getElementById("statScores"),
-    statPct: document.getElementById("statPct"),
+    statMissing: document.getElementById("statMissing"),
     statSpan: document.getElementById("statSpan"),
     recentText: document.getElementById("recentText"),
     gridRows: document.getElementById("gridRows"),
@@ -109,7 +112,8 @@ function scorigamiStart() {
   el.yearFromVal.textContent = sl(MIN_SEASON);
   el.yearToVal.textContent = sl(MAX_SEASON);
 
-  var state = { type: "all", yearFrom: MIN_SEASON, yearTo: MAX_SEASON, selected: null, teamA: "", teamB: "" };
+  var state = { type: "all", yearFrom: MIN_SEASON, yearTo: MAX_SEASON, selected: null, teamA: "", teamB: "", tab: "grid", firstDesc: false };
+  var lastCellMap = {}, lastTotal = 0;
 
   // ---------- times (para os seletores) ----------
   var TEAM_INFO = Object.create(null); // nome -> { first, last } (temporadas em que o nome aparece)
@@ -151,7 +155,7 @@ function scorigamiStart() {
       pageTitle: "NHL Scorigami \u2014 Todos os placares da história da NHL",
       eyebrow: "Cada placar. Toda a história.",
       subtitle: "Mais de cem anos de jogos da NHL, reduzidos a uma única grade: cada combinação de placar já registrada \u2014 e todas as que ainda não aconteceram.",
-      sbGames: "Jogos analisados", sbScores: "Placares distintos", sbPct: "Da grade preenchida", sbSeasons: "Temporadas",
+      sbGames: "Jogos analisados", sbScores: "Placares distintos", sbMissing: "Placares que não aconteceram", sbSeasons: "Temporadas",
       ctrlType: "Tipo de jogo", typeAll: "Todos", typeReg: "Temporada regular", typePo: "Playoffs",
       ctrlFrom: "A partir da temporada", ctrlTo: "Até a temporada",
       ctrlTeam: "Ver jogos apenas de:", ctrlOpp: "Contra (opcional):", allTeams: "Todos os times", anyOpp: "Qualquer adversário",
@@ -162,7 +166,16 @@ function scorigamiStart() {
       legendNever: "Nunca aconteceu", legendCommon: "Placar mais comum",
       close: "Fechar ✕",
       follow: "Siga o Brasil Tem Hockey",
-      footer: "Feito a partir de dados históricos de jogos da NHL (1917–<span id=\"footerYears\"></span>). Inspirado no conceito de <em>Scorigami</em> do futebol americano.",
+      footer: "Feito a partir de dados históricos de jogos da NHL (1917–<span id=\"footerYears\"></span>). Inspirado no conceito de <em>Scorigami</em> do futebol americano.<br>Referências: <a href='https://www.hockey-reference.com/' target='_blank' rel='noopener noreferrer'>Hockey-Reference</a> · <a href='https://nflscorigami.com/' target='_blank' rel='noopener noreferrer'>NFL Scorigami (original)</a>",
+      tabGrid: "Grade de placares", tabStats: "Estatísticas",
+      scrollHint: "Arraste a grade para os lados para ver todos os placares.",
+      statsNote: "As estatísticas seguem os filtros acima (tipo de jogo, times e temporadas).",
+      stCountTitle: "Quantas vezes cada placar aconteceu", stCountSub: "Do mais comum ao mais raro.",
+      stFirstTitle: "Quando cada placar aconteceu pela primeira vez", stFirstSub: "O jogo que inaugurou cada placar no recorte atual.",
+      stTeamsTitle: "Times mais envolvidos em jogos de scorigami", stTeamsSub: "Conta os jogos que inauguraram um placar com participação do time (como vencedor, perdedor ou em empate).",
+      thScore: "Placar", thTimes: "Vezes", thPct: "% dos jogos", thDate: "Data", thGame: "Jogo", thSeason: "Temporada", thStage: "Fase",
+      thTeam: "Time", thTotal: "Scorigamis", thWon: "Venceu", thLost: "Perdeu", thTied: "Empatou",
+      tieTag: "empate", orderNewFirst: "Mais recentes primeiro ↓", orderOldFirst: "Mais antigos primeiro ↑", noStats: "Nenhum dado no recorte selecionado.",
       noGames: "Nenhum jogo no recorte selecionado.",
       noGamesScore: "Nenhum jogo com esse placar no recorte atual.",
       gameOne: "jogo", gameMany: "jogos", since: "desde", never: "nunca aconteceu",
@@ -175,7 +188,7 @@ function scorigamiStart() {
       pageTitle: "NHL Scorigami \u2014 Every score in NHL history",
       eyebrow: "Every score. All of history.",
       subtitle: "Over a hundred years of NHL games, boiled down to a single grid: every score combination ever recorded \u2014 and all the ones that have yet to happen.",
-      sbGames: "Games analyzed", sbScores: "Distinct scores", sbPct: "Of the grid filled", sbSeasons: "Seasons",
+      sbGames: "Games analyzed", sbScores: "Distinct scores", sbMissing: "Scores that never happened", sbSeasons: "Seasons",
       ctrlType: "Game type", typeAll: "All", typeReg: "Regular season", typePo: "Playoffs",
       ctrlFrom: "From season", ctrlTo: "To season",
       ctrlTeam: "Show only games of:", ctrlOpp: "Against (optional):", allTeams: "All teams", anyOpp: "Any opponent",
@@ -186,7 +199,16 @@ function scorigamiStart() {
       legendNever: "Never happened", legendCommon: "Most common score",
       close: "Close ✕",
       follow: "Follow Brasil Tem Hockey",
-      footer: "Built from historical NHL game data (1917–<span id=\"footerYears\"></span>). Inspired by the <em>Scorigami</em> concept from American football.",
+      footer: "Built from historical NHL game data (1917–<span id=\"footerYears\"></span>). Inspired by the <em>Scorigami</em> concept from American football.<br>References: <a href='https://www.hockey-reference.com/' target='_blank' rel='noopener noreferrer'>Hockey-Reference</a> · <a href='https://nflscorigami.com/' target='_blank' rel='noopener noreferrer'>NFL Scorigami (original)</a>",
+      tabGrid: "Score grid", tabStats: "Statistics",
+      scrollHint: "Swipe the grid sideways to see every score.",
+      statsNote: "Statistics follow the filters above (game type, teams and seasons).",
+      stCountTitle: "How many times each score happened", stCountSub: "From most common to rarest.",
+      stFirstTitle: "When each score first happened", stFirstSub: "The game that first produced each score in the current selection.",
+      stTeamsTitle: "Teams most involved in scorigami games", stTeamsSub: "Counts the games that created a new score with the team taking part (as winner, loser or in a tie).",
+      thScore: "Score", thTimes: "Times", thPct: "% of games", thDate: "Date", thGame: "Game", thSeason: "Season", thStage: "Stage",
+      thTeam: "Team", thTotal: "Scorigamis", thWon: "Won", thLost: "Lost", thTied: "Tied",
+      tieTag: "tie", orderNewFirst: "Newest first ↓", orderOldFirst: "Oldest first ↑", noStats: "No data in the selected range.",
       noGames: "No games in the selected range.",
       noGamesScore: "No games with this score in the current range.",
       gameOne: "game", gameMany: "games", since: "since", never: "never happened",
@@ -209,7 +231,7 @@ function scorigamiStart() {
     }
     document.title = T("pageTitle");
     document.documentElement.lang = LANG === "pt" ? "pt-BR" : "en";
-    var fy = document.getElementById("footerYears"); if (fy) fy.textContent = MAX_SEASON;
+    var fy = document.getElementById("footerYears"); if (fy) fy.textContent = LAST_YEAR;
     var bs = document.querySelectorAll("#langSeg button");
     for (var j = 0; j < bs.length; j++) bs[j].classList.toggle("active", bs[j].getAttribute("data-lang") === LANG);
     populateTeams();
@@ -284,7 +306,7 @@ function scorigamiStart() {
     el.statGames.textContent = filtered.length.toLocaleString(T("locale"));
     var achieved = Object.keys(cellMap).length;
     el.statScores.textContent = achieved.toLocaleString(T("locale"));
-    el.statPct.textContent = ((achieved / TOTAL_POSSIBLE) * 100).toFixed(1) + "%";
+    el.statMissing.textContent = Math.max(0, TOTAL_POSSIBLE - achieved).toLocaleString(T("locale"));
     el.statSpan.textContent = sl(state.yearFrom) + "–" + sl(state.yearTo);
 
     // most recent scorigami = achieved cell with the latest "first occurrence"
@@ -306,6 +328,8 @@ function scorigamiStart() {
       el.recentText.textContent = T("noGames");
     }
 
+    lastCellMap = cellMap; lastTotal = filtered.length;
+    if (state.tab === "stats") renderStats(cellMap, filtered.length);
     renderGrid(cellMap, maxCount, recentKey);
 
     // refresh open detail panel if a cell is selected and still relevant
@@ -316,6 +340,75 @@ function scorigamiStart() {
 
     // redesenhar a grade não deve mexer na posição da página
     if (Math.abs(window.pageYOffset - scrollY) > 1) window.scrollTo(0, scrollY);
+  }
+
+
+  // ---------- estatísticas ----------
+  function escH(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function renderStats(cellMap, total) {
+    var nf = function (n) { return n.toLocaleString(T("locale")); };
+    var pf = function (n) { return n.toLocaleString(T("locale"), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%"; };
+    var tc = document.getElementById("tblCount"), tf = document.getElementById("tblFirst"), tt = document.getElementById("tblTeams");
+    var btn = document.getElementById("btnFirstOrder");
+    btn.textContent = state.firstDesc ? T("orderOldFirst") : T("orderNewFirst");
+
+    var rows = Object.keys(cellMap).map(function (k) {
+      var p = k.split("_"), c = cellMap[k], first = c.games[0];
+      for (var i = 1; i < c.games.length; i++) if (c.games[i].ms < first.ms) first = c.games[i];
+      return { w: +p[0], l: +p[1], count: c.count, first: first };
+    });
+    if (!rows.length) {
+      tc.innerHTML = tf.innerHTML = tt.innerHTML = "<tbody><tr><td class='dim'>" + T("noStats") + "</td></tr></tbody>";
+      return;
+    }
+    function scoreHtml(r) {
+      return r.w + "\u2013" + r.l + (r.w === r.l ? "<span class='tie-tag'>" + T("tieTag") + "</span>" : "");
+    }
+
+    // 1) quantas vezes cada placar aconteceu
+    var byCount = rows.slice().sort(function (x, y) { return y.count - x.count || y.w - x.w || y.l - x.l; });
+    var maxC = byCount[0].count;
+    tc.innerHTML = "<thead><tr><th class='rank'>#</th><th>" + T("thScore") + "</th><th class='num'>" + T("thTimes") + "</th><th class='num'>" + T("thPct") + "</th><th class='barcell'></th></tr></thead><tbody>" +
+      byCount.map(function (r, i) {
+        return "<tr><td class='rank'>" + (i + 1) + "</td><td class='score'>" + scoreHtml(r) + "</td><td class='num'>" + nf(r.count) +
+          "</td><td class='num'>" + pf(r.count / total * 100) + "</td><td class='barcell'><div class='bar' style='width:" + Math.max(2, r.count / maxC * 100).toFixed(1) + "%'></div></td></tr>";
+      }).join("") + "</tbody>";
+
+    // 2) quando cada placar aconteceu pela primeira vez
+    var byDate = rows.slice().sort(function (x, y) { return x.first.ms - y.first.ms || x.w - y.w || x.l - y.l; });
+    byDate.forEach(function (r, i) { r.n = i + 1; });
+    if (state.firstDesc) byDate.reverse();
+    tf.innerHTML = "<thead><tr><th class='rank'>#</th><th>" + T("thScore") + "</th><th>" + T("thDate") + "</th><th>" + T("thGame") + "</th><th class='hide-m'>" + T("thSeason") + "</th><th class='hide-m'>" + T("thStage") + "</th></tr></thead><tbody>" +
+      byDate.map(function (r) {
+        var g = r.first;
+        return "<tr><td class='rank'>" + r.n + "</td><td class='score'>" + scoreHtml(r) + "</td><td class='dim'>" + fmtDate(g.ms) + "</td><td>" +
+          escH(g.away) + " " + g.ag + " @ " + escH(g.home) + " " + g.hg + "</td><td class='dim hide-m'>" + sl(g.seasonYear) + "</td><td class='dim hide-m'>" +
+          (g.playoff ? T("tagPo") : T("tagReg")) + "</td></tr>";
+      }).join("") + "</tbody>";
+
+    // 3) times mais envolvidos em jogos de scorigami
+    var teams = Object.create(null), anyTie = false;
+    function bump(name, field) {
+      var t = teams[name] || (teams[name] = { name: name, total: 0, won: 0, lost: 0, tied: 0 });
+      t[field]++;
+    }
+    rows.forEach(function (r) {
+      var g = r.first;
+      bump(g.away, "total"); bump(g.home, "total");
+      if (g.isTie) { bump(g.away, "tied"); bump(g.home, "tied"); anyTie = true; }
+      else if (g.ag > g.hg) { bump(g.away, "won"); bump(g.home, "lost"); }
+      else { bump(g.home, "won"); bump(g.away, "lost"); }
+    });
+    var tlist = Object.keys(teams).map(function (k) { return teams[k]; })
+      .sort(function (x, y) { return y.total - x.total || x.name.localeCompare(y.name); });
+    var maxT = tlist[0].total;
+    tt.innerHTML = "<thead><tr><th class='rank'>#</th><th>" + T("thTeam") + "</th><th class='num'>" + T("thTotal") + "</th><th class='num'>" + T("thWon") + "</th><th class='num'>" + T("thLost") + "</th>" +
+      (anyTie ? "<th class='num'>" + T("thTied") + "</th>" : "") + "<th class='barcell'></th></tr></thead><tbody>" +
+      tlist.map(function (t, i) {
+        return "<tr><td class='rank'>" + (i + 1) + "</td><td>" + escH(t.name) + "</td><td class='num'>" + t.total + "</td><td class='num'>" + t.won + "</td><td class='num'>" + t.lost + "</td>" +
+          (anyTie ? "<td class='num'>" + t.tied + "</td>" : "") + "<td class='barcell'><div class='bar' style='width:" + Math.max(2, t.total / maxT * 100).toFixed(1) + "%'></div></td></tr>";
+      }).join("") + "</tbody>";
   }
 
   function renderGrid(cellMap, maxCount, recentKey) {
@@ -450,6 +543,22 @@ function scorigamiStart() {
     state.yearTo = v;
     el.yearToVal.textContent = sl(v);
     buildAndRender();
+  });
+
+  document.getElementById("tabSeg").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    state.tab = b.getAttribute("data-tab");
+    Array.prototype.forEach.call(document.querySelectorAll("#tabSeg button"), function (x) {
+      x.classList.toggle("active", x === b);
+    });
+    document.getElementById("viewGrid").style.display = state.tab === "grid" ? "" : "none";
+    document.getElementById("viewStats").style.display = state.tab === "stats" ? "" : "none";
+    if (state.tab === "stats") renderStats(lastCellMap, lastTotal);
+  });
+  document.getElementById("btnFirstOrder").addEventListener("click", function () {
+    state.firstDesc = !state.firstDesc;
+    renderStats(lastCellMap, lastTotal);
   });
 
   document.getElementById("langSeg").addEventListener("click", function (e) {

@@ -77,23 +77,26 @@
   .scoreboard{
     display:flex; justify-content:center; gap:0;
     margin: 40px auto 0;
-    max-width: 720px;
+    max-width: 800px;
     border: 1px solid var(--cell-border);
     background: rgba(10,21,32,.6);
     border-radius:4px;
     overflow:hidden;
   }
   .sb-stat{
-    flex:1; padding: 18px 12px; text-align:center;
+    flex:1; min-width:0; padding: 18px 12px; text-align:center;
     border-right: 1px solid var(--cell-border);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
   }
   .sb-stat:last-child{ border-right:none; }
   .sb-num{
     font-family:'Share Tech Mono', monospace;
     font-size: clamp(22px, 4vw, 34px);
+    white-space:nowrap; line-height:1.15;
     color: var(--blueline-glow);
     text-shadow: 0 0 16px rgba(79,168,240,.5);
   }
+  .sb-num.sb-span{ font-size: clamp(16px, 2.6vw, 22px); }
   .sb-label{
     font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
     color: var(--ink-dim); margin-top:6px;
@@ -108,14 +111,14 @@
   /* ---------- controls ---------- */
   .controls{
     margin-top: 44px;
-    display:flex; flex-wrap:wrap; gap:28px;
-    align-items:flex-end; justify-content:space-between;
+    display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:22px 32px;
+    align-items:end;
     padding: 18px 22px;
     background: rgba(15,32,51,.4);
     border: 1px solid var(--cell-border);
     border-radius:6px;
   }
-  .ctrl-group{ display:flex; flex-direction:column; gap:8px; min-width:180px; }
+  .ctrl-group{ display:flex; flex-direction:column; gap:8px; min-width:0; }
   .ctrl-label{
     font-family:'Share Tech Mono', monospace;
     font-size:11px; letter-spacing:.14em; text-transform:uppercase; color: var(--ink-dim);
@@ -123,7 +126,7 @@
   .segmented{ display:flex; border:1px solid var(--cell-border); border-radius:4px; overflow:hidden; }
   .segmented button{
     flex:1; background:transparent; border:none; color:var(--ink-dim);
-    font-family:'Inter'; font-size:13px; font-weight:600; padding:9px 14px; cursor:pointer;
+    font-family:'Inter', sans-serif; font-size:13px; font-weight:600; padding:9px 14px; cursor:pointer;
     border-right:1px solid var(--cell-border); transition:.15s;
   }
   .segmented button:last-child{ border-right:none; }
@@ -132,13 +135,13 @@
 
   .team-select{
     background:#0a1520; color:var(--ice); border:1px solid var(--cell-border); border-radius:4px;
-    padding:9px 12px; font-family:'Inter'; font-size:13px; min-width:220px; max-width:100%;
+    padding:9px 12px; font-family:'Inter', sans-serif; font-size:13px; width:100%; min-width:0;
   }
   .team-select:disabled{ opacity:.45; }
   .team-select:focus{ outline:none; border-color:var(--blueline-glow); }
 
   .range-row{ display:flex; align-items:center; gap:10px; }
-  .range-row input[type=range]{ width:180px; accent-color: var(--blueline-glow); }
+  .range-row input[type=range]{ flex:1; min-width:0; accent-color: var(--blueline-glow); }
   .range-val{ font-family:'Share Tech Mono', monospace; font-size:13px; color:var(--ice); min-width:52px; }
 
   /* ---------- most recent scorigami banner ---------- */
@@ -168,7 +171,7 @@
   /* ---------- grid section ---------- */
   .grid-section{ margin-top: 40px; }
   .grid-heading{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
-  .grid-heading h2{ font-family:'Oswald'; font-size:22px; margin:0; color:var(--ice); font-weight:600; }
+  .grid-heading h2{ font-family:'Oswald', sans-serif; font-size:22px; margin:0; color:var(--ice); font-weight:600; }
   .grid-heading small{ color:var(--ink-dim); font-size:12.5px; }
 
   .grid-scroll{ overflow-x:auto; padding-bottom:8px; }
@@ -188,7 +191,7 @@
     font-family:'Share Tech Mono', monospace; font-size:11px; color:var(--ink-dim);
   }
   .cell{
-    width:28px; height:28px; border-radius:3px;
+    width:var(--cell,28px); height:var(--cell,28px); border-radius:3px;
     background: var(--cell-cold);
     border: 1px solid var(--cell-border);
     cursor: default;
@@ -205,10 +208,41 @@
   .cell.recent{ animation: pulse 1.2s infinite ease-in-out; box-shadow:0 0 12px 3px rgba(255,92,108,.6); }
 
   .col-ticks{ display:flex; gap:3px; padding-left:25px; margin-top:6px; }
-  .col-tick{ width:28px; text-align:center; font-family:'Share Tech Mono', monospace; font-size:11px; color:var(--ink-dim); }
+  .col-tick{ width:var(--cell,28px); text-align:center; font-family:'Share Tech Mono', monospace; font-size:11px; color:var(--ink-dim); }
 
   .legend{ display:flex; align-items:center; gap:8px; margin-top:14px; font-size:11px; color:var(--ink-dim); font-family:'Share Tech Mono', monospace;}
   .legend-swatch{ width:16px; height:16px; border-radius:3px; border:1px solid var(--cell-border); }
+
+  /* ---------- abas ---------- */
+  .tabs{ margin-top:34px; }
+  .tabs .segmented{ display:inline-flex; }
+  .tabs .segmented button{ padding:11px 22px; font-size:14px; white-space:nowrap; }
+  .scroll-hint{ display:none; color:var(--ink-dim); font-size:12px; margin-bottom:8px; }
+
+  /* ---------- estatísticas ---------- */
+  .stat-note{ color:var(--ink-dim); font-size:13px; margin:26px 0 0; line-height:1.5; }
+  .stat-card{ margin-top:22px; border:1px solid var(--cell-border); border-radius:6px; background:rgba(10,21,32,.55); padding:20px 22px; }
+  .stat-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+  .stat-card h2{ font-family:'Oswald', sans-serif; font-size:20px; margin:0; color:var(--ice); font-weight:600; }
+  .stat-sub{ color:var(--ink-dim); font-size:12.5px; line-height:1.5; margin:4px 0 14px; }
+  .stat-btn{ background:transparent; border:1px solid var(--cell-border); color:var(--ink-dim); border-radius:4px; padding:6px 10px; cursor:pointer; font-family:'Inter', sans-serif; font-size:12px; }
+  .stat-btn:hover{ color:var(--ice); border-color:var(--blueline-glow); }
+  .table-scroll{ max-height:440px; overflow:auto; border-top:1px solid var(--cell-border); }
+  .stat-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .stat-table th{
+    position:sticky; top:0; background:#0c1a29; z-index:1;
+    text-align:left; font-family:'Share Tech Mono', monospace; font-size:10.5px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-dim); font-weight:400; padding:9px 8px; white-space:nowrap;
+  }
+  .stat-table td{ padding:8px; border-bottom:1px solid rgba(255,255,255,.05); vertical-align:middle; }
+  .stat-table .num{ text-align:right; font-family:'Share Tech Mono', monospace; white-space:nowrap; }
+  .stat-table th.num{ text-align:right; }
+  .stat-table .rank{ color:var(--ink-dim); font-family:'Share Tech Mono', monospace; width:36px; }
+  .stat-table .score{ font-family:'Share Tech Mono', monospace; font-size:15px; color:var(--ice); white-space:nowrap; }
+  .stat-table .dim{ color:var(--ink-dim); white-space:nowrap; }
+  .stat-table .tie-tag{ font-size:10px; color:var(--goal-red-glow); margin-left:6px; letter-spacing:.06em; text-transform:uppercase; }
+  .stat-table .barcell{ width:34%; min-width:90px; }
+  .bar{ height:8px; border-radius:4px; background:linear-gradient(90deg,var(--blueline),var(--blueline-glow)); min-width:2px; }
 
   /* ---------- detail panel ---------- */
   .detail{
@@ -217,10 +251,10 @@
   }
   .detail.open{ display:block; }
   .detail-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-  .detail-head h3{ font-family:'Oswald'; font-size:20px; margin:0; color:var(--ice); font-weight:600;}
+  .detail-head h3{ font-family:'Oswald', sans-serif; font-size:20px; margin:0; color:var(--ice); font-weight:600;}
   .detail-head button{
     background:transparent; border:1px solid var(--cell-border); color:var(--ink-dim);
-    border-radius:4px; padding:6px 10px; cursor:pointer; font-family:'Inter'; font-size:12px;
+    border-radius:4px; padding:6px 10px; cursor:pointer; font-family:'Inter', sans-serif; font-size:12px;
   }
   .detail-head button:hover{ color:var(--ice); border-color:var(--blueline-glow); }
   .games-list{ max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
@@ -250,8 +284,43 @@
   footer a{ color:var(--blueline-glow); }
 
   @media (max-width: 640px){
-    .controls{ flex-direction:column; align-items:stretch; }
-    .cell, .row-tick, .col-tick{ }
+    :root{ --cell:24px; }
+    .wrap{ padding:0 14px 56px; }
+    header.hero{ padding:52px 14px 30px; }
+    .lang{ top:10px; right:12px; }
+    .subtitle{ font-size:14.5px; }
+    .scoreboard{ display:grid; grid-template-columns:1fr 1fr; margin-top:28px; }
+    .sb-stat{ padding:14px 8px; }
+    .sb-stat:nth-child(2n){ border-right:none; }
+    .sb-stat:nth-child(-n+2){ border-bottom:1px solid var(--cell-border); }
+    .sb-num{ font-size:26px; }
+    .sb-num.sb-span{ font-size:20px; }
+    .sb-label{ font-size:10px; }
+    .controls{ grid-template-columns:minmax(0,1fr); gap:16px; padding:14px; margin-top:30px; }
+    .ctrl-group{ min-width:0; width:100%; }
+    .segmented button{ padding:10px 6px; font-size:12.5px; }
+    .team-select{ width:100%; min-width:0; }
+    .range-row input[type=range]{ flex:1; width:auto; min-width:0; }
+    .recent-banner{ padding:12px 14px; gap:12px; margin-top:20px; }
+    .tabs{ margin-top:26px; }
+    .tabs .segmented{ display:flex; }
+    .tabs .segmented button{ flex:1; padding:11px 8px; font-size:13px; }
+    .grid-section{ margin-top:26px; }
+    .grid-heading small{ font-size:12px; }
+    .grid-outer{ gap:8px; }
+    .grid-scroll{ -webkit-overflow-scrolling:touch; }
+    .scroll-hint{ display:block; }
+    .row-tick{ width:20px; padding-right:4px; font-size:10px; }
+    .col-ticks{ padding-left:23px; }
+    .col-tick{ font-size:10px; }
+    .legend{ flex-wrap:wrap; }
+    .detail, .stat-card{ padding:14px; }
+    .game-row{ flex-wrap:wrap; gap:4px 12px; }
+    .game-row .matchup{ order:3; flex-basis:100%; }
+    .stat-table{ font-size:12.5px; }
+    .stat-table td, .stat-table th{ padding:7px 6px; }
+    .stat-table .barcell, .stat-table .hide-m{ display:none; }
+    .social{ margin-top:44px; }
   }
 </style>
 </head>
@@ -266,8 +335,8 @@
   <div class="scoreboard">
     <div class="sb-stat"><div class="sb-num" id="statGames">–</div><div class="sb-label" data-i18n="sbGames">Jogos analisados</div></div>
     <div class="sb-stat"><div class="sb-num" id="statScores">–</div><div class="sb-label" data-i18n="sbScores">Placares distintos</div></div>
-    <div class="sb-stat"><div class="sb-num" id="statPct">–</div><div class="sb-label" data-i18n="sbPct">Da grade preenchida</div></div>
-    <div class="sb-stat"><div class="sb-num" id="statSpan">–</div><div class="sb-label" data-i18n="sbSeasons">Temporadas</div></div>
+    <div class="sb-stat"><div class="sb-num" id="statMissing">–</div><div class="sb-label" data-i18n="sbMissing">Placares que não aconteceram</div></div>
+    <div class="sb-stat"><div class="sb-num sb-span" id="statSpan">–</div><div class="sb-label" data-i18n="sbSeasons">Temporadas</div></div>
   </div>
 </header>
 
@@ -314,12 +383,21 @@
     </div>
   </div>
 
+  <div class="tabs">
+    <div class="segmented" id="tabSeg">
+      <button data-tab="grid" class="active" data-i18n="tabGrid">Grade de placares</button>
+      <button data-tab="stats" data-i18n="tabStats">Estatísticas</button>
+    </div>
+  </div>
+
+  <div id="viewGrid">
   <div class="grid-section">
     <div class="grid-heading">
       <h2 data-i18n="gridTitle">A grade de placares</h2>
       <small data-i18n="gridHelp">Eixo vertical = placar do vencedor · Eixo horizontal = placar do perdedor · <span style="opacity:.7">●</span> = empate. Clique numa célula para ver os jogos.</small>
     </div>
 
+    <div class="scroll-hint" data-i18n="scrollHint">Arraste a grade para os lados para ver todos os placares.</div>
     <div class="grid-scroll">
       <div class="grid-outer">
         <div class="axis-y-label" data-i18n="axisWinner">Placar do vencedor</div>
@@ -350,6 +428,30 @@
     <div class="games-list" id="gamesList"></div>
   </div>
 
+  </div>
+
+  <div id="viewStats" style="display:none">
+    <p class="stat-note" data-i18n="statsNote">As estatísticas seguem os filtros acima (tipo de jogo, times e temporadas).</p>
+
+    <section class="stat-card">
+      <div class="stat-head"><h2 data-i18n="stCountTitle">Quantas vezes cada placar aconteceu</h2></div>
+      <p class="stat-sub" data-i18n="stCountSub">Do mais comum ao mais raro.</p>
+      <div class="table-scroll"><table class="stat-table" id="tblCount"></table></div>
+    </section>
+
+    <section class="stat-card">
+      <div class="stat-head"><h2 data-i18n="stFirstTitle">Quando cada placar aconteceu pela primeira vez</h2><button class="stat-btn" id="btnFirstOrder"></button></div>
+      <p class="stat-sub" data-i18n="stFirstSub">O jogo que inaugurou cada placar no recorte atual.</p>
+      <div class="table-scroll"><table class="stat-table" id="tblFirst"></table></div>
+    </section>
+
+    <section class="stat-card">
+      <div class="stat-head"><h2 data-i18n="stTeamsTitle">Times mais envolvidos em jogos de scorigami</h2></div>
+      <p class="stat-sub" data-i18n="stTeamsSub">Conta os jogos que inauguraram um placar, com participação do time.</p>
+      <div class="table-scroll"><table class="stat-table" id="tblTeams"></table></div>
+    </section>
+  </div>
+
   <div class="social">
     <div class="social-label" data-i18n="follow">Siga o Brasil Tem Hockey</div>
     <div class="social-links">
@@ -368,6 +470,6 @@
 </div>
 
 <script src="data.js"></script>
-<script src="app.js?v=20261005b"></script>
+<script src="app.js?v=20261005c"></script>
 </body>
 </html>
