@@ -161,6 +161,7 @@ function scorigamiStart() {
       axisWinner: "Placar do vencedor", axisLoser: "Placar do perdedor",
       legendNever: "Nunca aconteceu", legendCommon: "Placar mais comum",
       close: "Fechar ✕",
+      follow: "Siga o Brasil Tem Hockey",
       footer: "Feito a partir de dados históricos de jogos da NHL (1917–<span id=\"footerYears\"></span>). Inspirado no conceito de <em>Scorigami</em> do futebol americano.",
       noGames: "Nenhum jogo no recorte selecionado.",
       noGamesScore: "Nenhum jogo com esse placar no recorte atual.",
@@ -184,6 +185,7 @@ function scorigamiStart() {
       axisWinner: "Winning score", axisLoser: "Losing score",
       legendNever: "Never happened", legendCommon: "Most common score",
       close: "Close ✕",
+      follow: "Follow Brasil Tem Hockey",
       footer: "Built from historical NHL game data (1917–<span id=\"footerYears\"></span>). Inspired by the <em>Scorigami</em> concept from American football.",
       noGames: "No games in the selected range.",
       noGamesScore: "No games with this score in the current range.",
@@ -201,7 +203,10 @@ function scorigamiStart() {
 
   function applyStatic() {
     var nodes = document.querySelectorAll("[data-i18n]");
-    for (var i = 0; i < nodes.length; i++) nodes[i].innerHTML = T(nodes[i].getAttribute("data-i18n"));
+    for (var i = 0; i < nodes.length; i++) {
+      var txt = T(nodes[i].getAttribute("data-i18n"));
+      if (txt !== undefined) nodes[i].innerHTML = txt; // sem texto traduzido, mantém o que está no HTML
+    }
     document.title = T("pageTitle");
     document.documentElement.lang = LANG === "pt" ? "pt-BR" : "en";
     var fy = document.getElementById("footerYears"); if (fy) fy.textContent = MAX_SEASON;
