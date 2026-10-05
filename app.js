@@ -1,4 +1,16 @@
+// Carrega jogos_novos.js sempre na versão mais recente (evita o cache do navegador/GitHub Pages)
+// e só depois monta a página. Se o arquivo não existir, o site funciona só com o data.js.
 (function () {
+  var started = false;
+  function go() { if (started) return; started = true; scorigamiStart(); }
+  var s = document.createElement("script");
+  s.src = "jogos_novos.js?v=" + Date.now();
+  s.onload = go;
+  s.onerror = go;
+  document.head.appendChild(s);
+})();
+
+function scorigamiStart() {
   "use strict";
 
   // mostra qualquer erro na própria página (em vez de ficar em "Calculando…")
@@ -94,8 +106,8 @@
   // set slider bounds to actual data range
   el.yearFrom.min = MIN_SEASON; el.yearFrom.max = MAX_SEASON; el.yearFrom.value = MIN_SEASON;
   el.yearTo.min = MIN_SEASON; el.yearTo.max = MAX_SEASON; el.yearTo.value = MAX_SEASON;
-  el.yearFromVal.textContent = MIN_SEASON;
-  el.yearToVal.textContent = MAX_SEASON;
+  el.yearFromVal.textContent = sl(MIN_SEASON);
+  el.yearToVal.textContent = sl(MAX_SEASON);
 
   var state = { type: "all", yearFrom: MIN_SEASON, yearTo: MAX_SEASON, selected: null };
 
@@ -182,6 +194,12 @@
     return "rgb(" + STOPS[STOPS.length - 1].c.join(",") + ")";
   }
 
+  // temporada em formato "25/26" (seasonYear = ano em que a temporada termina)
+  function sl(y) {
+    function p(n) { return ("0" + (n % 100)).slice(-2); }
+    return p(y - 1) + "/" + p(y);
+  }
+
   function fmtDate(ms) {
     return new Date(ms).toLocaleDateString(T("locale"), { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
   }
@@ -220,7 +238,7 @@
     var achieved = Object.keys(cellMap).length;
     el.statScores.textContent = achieved.toLocaleString(T("locale"));
     el.statPct.textContent = ((achieved / TOTAL_POSSIBLE) * 100).toFixed(1) + "%";
-    el.statSpan.textContent = state.yearFrom + "–" + state.yearTo;
+    el.statSpan.textContent = sl(state.yearFrom) + "–" + sl(state.yearTo);
 
     // most recent scorigami = achieved cell with the latest "first occurrence"
     var recentKey = null, recentFirst = -1;
@@ -359,14 +377,14 @@
     var v = parseInt(el.yearFrom.value, 10);
     if (v > state.yearTo) { v = state.yearTo; el.yearFrom.value = v; }
     state.yearFrom = v;
-    el.yearFromVal.textContent = v;
+    el.yearFromVal.textContent = sl(v);
     buildAndRender();
   });
   el.yearTo.addEventListener("input", function () {
     var v = parseInt(el.yearTo.value, 10);
     if (v < state.yearFrom) { v = state.yearFrom; el.yearTo.value = v; }
     state.yearTo = v;
-    el.yearToVal.textContent = v;
+    el.yearToVal.textContent = sl(v);
     buildAndRender();
   });
 
@@ -381,4 +399,4 @@
 
   applyStatic();
   buildAndRender();
-})();
+}

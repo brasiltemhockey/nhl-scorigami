@@ -132,7 +132,7 @@
 
   .range-row{ display:flex; align-items:center; gap:10px; }
   .range-row input[type=range]{ width:180px; accent-color: var(--blueline-glow); }
-  .range-val{ font-family:'Share Tech Mono', monospace; font-size:13px; color:var(--ice); min-width:38px; }
+  .range-val{ font-family:'Share Tech Mono', monospace; font-size:13px; color:var(--ice); min-width:52px; }
 
   /* ---------- most recent scorigami banner ---------- */
   .recent-banner{
@@ -267,14 +267,14 @@
       <div class="ctrl-label" data-i18n="ctrlFrom">A partir da temporada</div>
       <div class="range-row">
         <input type="range" id="yearFrom" min="1917" max="2026" value="1917">
-        <span class="range-val" id="yearFromVal">1917</span>
+        <span class="range-val" id="yearFromVal">17/18</span>
       </div>
     </div>
     <div class="ctrl-group">
       <div class="ctrl-label" data-i18n="ctrlTo">Até a temporada</div>
       <div class="range-row">
         <input type="range" id="yearTo" min="1917" max="2026" value="2026">
-        <span class="range-val" id="yearToVal">2026</span>
+        <span class="range-val" id="yearToVal">25/26</span>
       </div>
     </div>
   </div>
@@ -329,7 +329,6 @@
 </div>
 
 <script src="data.js"></script>
-<script src="jogos_novos.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
