@@ -109,7 +109,40 @@ function scorigamiStart() {
   el.yearFromVal.textContent = sl(MIN_SEASON);
   el.yearToVal.textContent = sl(MAX_SEASON);
 
-  var state = { type: "all", yearFrom: MIN_SEASON, yearTo: MAX_SEASON, selected: null };
+  var state = { type: "all", yearFrom: MIN_SEASON, yearTo: MAX_SEASON, selected: null, teamA: "", teamB: "" };
+
+  // ---------- times (para os seletores) ----------
+  var TEAM_INFO = Object.create(null); // nome -> { first, last } (temporadas em que o nome aparece)
+  ALL_GAMES.forEach(function (g) {
+    [g.away, g.home].forEach(function (t) {
+      var i = TEAM_INFO[t] || (TEAM_INFO[t] = { first: g.seasonYear, last: g.seasonYear });
+      if (g.seasonYear < i.first) i.first = g.seasonYear;
+      if (g.seasonYear > i.last) i.last = g.seasonYear;
+    });
+  });
+  var TEAM_NAMES = Object.keys(TEAM_INFO).sort(function (x, y) { return x.localeCompare(y); });
+
+  function fillTeamSelect(sel, firstLabel, current, exclude) {
+    sel.innerHTML = "";
+    var o0 = document.createElement("option"); o0.value = ""; o0.textContent = firstLabel; sel.appendChild(o0);
+    TEAM_NAMES.forEach(function (t) {
+      if (t === exclude) return;
+      var o = document.createElement("option");
+      o.value = t;
+      // nomes que já não existem (ex.: Hartford Whalers) mostram o período em que existiram
+      var inf = TEAM_INFO[t];
+      o.textContent = inf.last < MAX_SEASON
+        ? t + " (" + (inf.first === inf.last ? sl(inf.first) : sl(inf.first) + "–" + sl(inf.last)) + ")"
+        : t;
+      sel.appendChild(o);
+    });
+    sel.value = current;
+  }
+  function populateTeams() {
+    fillTeamSelect(document.getElementById("teamA"), T("allTeams"), state.teamA, "");
+    fillTeamSelect(document.getElementById("teamB"), T("anyOpp"), state.teamB, state.teamA);
+    document.getElementById("teamB").disabled = !state.teamA;
+  }
 
   // ---------- idiomas (PT / EN) ----------
   var I18N = {
@@ -121,6 +154,7 @@ function scorigamiStart() {
       sbGames: "Jogos analisados", sbScores: "Placares distintos", sbPct: "Da grade preenchida", sbSeasons: "Temporadas",
       ctrlType: "Tipo de jogo", typeAll: "Todos", typeReg: "Temporada regular", typePo: "Playoffs",
       ctrlFrom: "A partir da temporada", ctrlTo: "Até a temporada",
+      ctrlTeam: "Ver jogos apenas de:", ctrlOpp: "Contra (opcional):", allTeams: "Todos os times", anyOpp: "Qualquer adversário",
       recentLabel: "Scorigami mais recente",
       gridTitle: "A grade de placares",
       gridHelp: "Eixo vertical = placar do vencedor · Eixo horizontal = placar do perdedor · <span style=\"opacity:.7\">●</span> = empate. Clique numa célula para ver os jogos.",
@@ -143,6 +177,7 @@ function scorigamiStart() {
       sbGames: "Games analyzed", sbScores: "Distinct scores", sbPct: "Of the grid filled", sbSeasons: "Seasons",
       ctrlType: "Game type", typeAll: "All", typeReg: "Regular season", typePo: "Playoffs",
       ctrlFrom: "From season", ctrlTo: "To season",
+      ctrlTeam: "Show only games of:", ctrlOpp: "Against (optional):", allTeams: "All teams", anyOpp: "Any opponent",
       recentLabel: "Most recent scorigami",
       gridTitle: "The score grid",
       gridHelp: "Vertical axis = winning score · Horizontal axis = losing score · <span style=\"opacity:.7\">●</span> = tie. Click a cell to see the games.",
@@ -172,6 +207,7 @@ function scorigamiStart() {
     var fy = document.getElementById("footerYears"); if (fy) fy.textContent = MAX_SEASON;
     var bs = document.querySelectorAll("#langSeg button");
     for (var j = 0; j < bs.length; j++) bs[j].classList.toggle("active", bs[j].getAttribute("data-lang") === LANG);
+    populateTeams();
   }
 
   // ---------- color scale ----------
@@ -211,11 +247,17 @@ function scorigamiStart() {
       if (g.seasonYear < state.yearFrom || g.seasonYear > state.yearTo) return false;
       if (t === "reg" && g.playoff) return false;
       if (t === "po" && !g.playoff) return false;
+      if (state.teamA) {
+        var hasA = g.away === state.teamA || g.home === state.teamA;
+        if (!hasA) return false;
+        if (state.teamB && !(g.away === state.teamB || g.home === state.teamB)) return false;
+      }
       return true;
     });
   }
 
   function buildAndRender() {
+    var scrollY = window.pageYOffset;
     var filtered = filterGames();
 
     // cellMap[w+'_'+l] = { count, firstMs, games: [] }
@@ -266,9 +308,14 @@ function scorigamiStart() {
       var sel = cellMap[state.selected];
       if (sel) openDetail(state.selected, sel.games); else closeDetail();
     }
+
+    // redesenhar a grade não deve mexer na posição da página
+    if (Math.abs(window.pageYOffset - scrollY) > 1) window.scrollTo(0, scrollY);
   }
 
   function renderGrid(cellMap, maxCount, recentKey) {
+    var keepH = el.gridRows.offsetHeight;
+    if (keepH) el.gridRows.style.minHeight = keepH + "px"; // evita a página "encolher" durante o redesenho
     el.gridRows.innerHTML = "";
     for (var w = 0; w <= MAX_SCORE; w++) {
       var row = document.createElement("div");
@@ -314,12 +361,13 @@ function scorigamiStart() {
       ct.textContent = lc;
       el.colTicks.appendChild(ct);
     }
+    el.gridRows.style.minHeight = "";
   }
 
   function selectCell(key, games) {
     state.selected = key;
-    openDetail(key, games, true); // só rola a tela quando o clique foi numa célula
-    buildAndRender(); // to refresh 'selected' highlight without recomputation cost issue
+    buildAndRender();
+    openDetail(key, games, true); // só rola a tela quando o clique foi numa célula // to refresh 'selected' highlight without recomputation cost issue
   }
 
   function openDetail(key, games, scroll) {
@@ -370,6 +418,17 @@ function scorigamiStart() {
     Array.prototype.forEach.call(el.typeSeg.querySelectorAll("button"), function (b) { b.classList.remove("active"); });
     btn.classList.add("active");
     state.type = btn.getAttribute("data-val");
+    buildAndRender();
+  });
+
+  document.getElementById("teamA").addEventListener("change", function (e) {
+    state.teamA = e.target.value;
+    if (!state.teamA || state.teamB === state.teamA) state.teamB = "";
+    populateTeams();
+    buildAndRender();
+  });
+  document.getElementById("teamB").addEventListener("change", function (e) {
+    state.teamB = e.target.value;
     buildAndRender();
   });
 

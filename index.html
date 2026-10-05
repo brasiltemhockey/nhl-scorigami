@@ -22,7 +22,7 @@
     --ink: #dbe8f0;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;overflow-anchor:none;}
   body{
     background: radial-gradient(1200px 700px at 50% -10%, var(--rink-navy-2) 0%, var(--rink-navy) 55%, #060c14 100%);
     color: var(--ink);
@@ -129,6 +129,13 @@
   .segmented button:last-child{ border-right:none; }
   .segmented button.active{ background: var(--blueline); color:white; }
   .segmented button:hover:not(.active){ background: rgba(30,95,168,.25); color:var(--ice); }
+
+  .team-select{
+    background:#0a1520; color:var(--ice); border:1px solid var(--cell-border); border-radius:4px;
+    padding:9px 12px; font-family:'Inter'; font-size:13px; min-width:220px; max-width:100%;
+  }
+  .team-select:disabled{ opacity:.45; }
+  .team-select:focus{ outline:none; border-color:var(--blueline-glow); }
 
   .range-row{ display:flex; align-items:center; gap:10px; }
   .range-row input[type=range]{ width:180px; accent-color: var(--blueline-glow); }
@@ -262,6 +269,14 @@
         <button data-val="reg" data-i18n="typeReg">Temporada regular</button>
         <button data-val="po" data-i18n="typePo">Playoffs</button>
       </div>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label" data-i18n="ctrlTeam">Ver jogos apenas de:</div>
+      <select class="team-select" id="teamA"></select>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label" data-i18n="ctrlOpp">Contra (opcional):</div>
+      <select class="team-select" id="teamB" disabled></select>
     </div>
     <div class="ctrl-group">
       <div class="ctrl-label" data-i18n="ctrlFrom">A partir da temporada</div>
