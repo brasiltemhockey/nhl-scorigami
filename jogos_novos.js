@@ -40,5 +40,9 @@ window.SCORIGAMI_EXTRA = [
   ["2026-10-04","Winnipeg Jets",3,"Detroit Red Wings",2,"reg"],
   ["2026-10-04","Utah Mammoth",2,"New York Rangers",4,"reg"],
   ["2026-10-04","Florida Panthers",2,"Anaheim Ducks",3,"reg"],
-  ["2026-10-04","Calgary Flames",1,"Seattle Kraken",6,"reg"]
+  ["2026-10-04","Calgary Flames",1,"Seattle Kraken",6,"reg"],
+  ["2026-10-05","Winnipeg Jets",3,"Pittsburgh Penguins",2,"reg"],
+  ["2026-10-05","Philadelphia Flyers",1,"Tampa Bay Lightning",4,"reg"],
+  ["2026-10-05","Ottawa Senators",4,"Boston Bruins",1,"reg"],
+  ["2026-10-05","San Jose Sharks",0,"Dallas Stars",5,"reg"]
 ];
